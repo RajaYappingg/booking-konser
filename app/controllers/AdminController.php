@@ -45,6 +45,7 @@ class AdminController extends Controller
             'formAction' => base_url('admin/concerts'),
             'formMethod' => 'post',
             'concert' => null,
+            'seatPrices' => $this->defaultSeatPrices(null),
         ]);
     }
 
@@ -57,8 +58,16 @@ class AdminController extends Controller
             redirect('admin/concerts/create');
         }
 
+        $seatPrices = $this->sanitizeSeatPrices($_POST);
+        if ($seatPrices === null) {
+            redirect('admin/concerts/create');
+        }
+
         $concertModel = new Concert();
-        $concertModel->create($data);
+        $concertId = $concertModel->create($data);
+
+        $seatModel = new Seat();
+        $seatModel->setCategoryPrices($concertId, $seatPrices);
 
         flash('success', 'Concert created successfully.');
         redirect('admin/concerts');
@@ -81,6 +90,7 @@ class AdminController extends Controller
             'formAction' => base_url('admin/concerts/' . $concert['id'] . '/update'),
             'formMethod' => 'post',
             'concert' => $concert,
+            'seatPrices' => $this->getSeatPricesForForm($concert),
         ]);
     }
 
@@ -101,7 +111,15 @@ class AdminController extends Controller
             redirect('admin/concerts/' . $id . '/edit');
         }
 
+        $seatPrices = $this->sanitizeSeatPrices($_POST);
+        if ($seatPrices === null) {
+            redirect('admin/concerts/' . $id . '/edit');
+        }
+
         $concertModel->update((int)$id, $data);
+
+        $seatModel = new Seat();
+        $seatModel->setCategoryPrices((int)$id, $seatPrices);
 
         flash('success', 'Concert updated successfully.');
         redirect('admin/concerts');
@@ -335,5 +353,76 @@ class AdminController extends Controller
             'expires_at' => $expiresAt,
             'active' => $active,
         ];
+    }
+
+    private function sanitizeSeatPrices(array $input): ?array
+    {
+        [$isValid, $errors, $clean] = Validation::validate($input, [
+            'vvip_price' => 'required',
+            'vip_price' => 'required',
+            'elite_price' => 'required',
+            'normal_price' => 'required',
+        ]);
+
+        if (!$isValid) {
+            flash('danger', 'Please fill all seat category prices.');
+            return null;
+        }
+
+        $fieldMap = [
+            'vvip_price' => 'VVIP',
+            'vip_price' => 'VIP',
+            'elite_price' => 'Elite',
+            'normal_price' => 'Normal',
+        ];
+
+        $prices = [];
+        foreach ($fieldMap as $field => $label) {
+            if (!is_numeric($clean[$field]) || (float)$clean[$field] < 0) {
+                flash('danger', $label . ' price must be a positive number.');
+                return null;
+            }
+
+            $prices[str_replace('_price', '', $field)] = (float)$clean[$field];
+        }
+
+        return $prices;
+    }
+
+    private function defaultSeatPrices(?array $concert): array
+    {
+        $basePrice = $concert && isset($concert['price']) ? (float)$concert['price'] : 0.0;
+
+        if ($basePrice <= 0) {
+            return [
+                'vvip' => '',
+                'vip' => '',
+                'elite' => '',
+                'normal' => '',
+            ];
+        }
+
+        return [
+            'vvip' => $basePrice * 2.0,
+            'vip' => $basePrice * 1.5,
+            'elite' => $basePrice * 1.2,
+            'normal' => $basePrice,
+        ];
+    }
+
+    private function getSeatPricesForForm(array $concert): array
+    {
+        $priceMap = $this->defaultSeatPrices($concert);
+        $seatModel = new Seat();
+        $categories = $seatModel->getCategoriesByConcert((int)$concert['id']);
+
+        foreach ($categories as $category) {
+            $code = (string)($category['code'] ?? '');
+            if ($code !== '' && array_key_exists($code, $priceMap)) {
+                $priceMap[$code] = (float)$category['price'];
+            }
+        }
+
+        return $priceMap;
     }
 }

@@ -51,16 +51,32 @@ if ($isEdit && !empty($concert['date'])) {
                     <input class="form-control" id="price" name="price" type="number" step="0.01" min="0" required value="<?= e((string)($concert['price'] ?? '')) ?>">
                 </div>
                 <div class="col-md-3">
+                    <label class="form-label" for="vvip_price">VVIP Price</label>
+                    <input class="form-control" id="vvip_price" name="vvip_price" type="number" step="0.01" min="0" required value="<?= e((string)($seatPrices['vvip'] ?? '')) ?>">
+                </div>
+                <div class="col-md-3">
                     <label class="form-label" for="available_seats">Available Seats</label>
                     <input class="form-control" id="available_seats" name="available_seats" type="number" min="0" required value="<?= e((string)($concert['available_seats'] ?? '')) ?>">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="vip_price">VIP Price</label>
+                    <input class="form-control" id="vip_price" name="vip_price" type="number" step="0.01" min="0" required value="<?= e((string)($seatPrices['vip'] ?? '')) ?>">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label" for="duration_minutes">Duration (minutes)</label>
                     <input class="form-control" id="duration_minutes" name="duration_minutes" type="number" min="1" required value="<?= e((string)($concert['duration_minutes'] ?? '')) ?>">
                 </div>
                 <div class="col-md-3">
+                    <label class="form-label" for="elite_price">Elite Price</label>
+                    <input class="form-control" id="elite_price" name="elite_price" type="number" step="0.01" min="0" required value="<?= e((string)($seatPrices['elite'] ?? '')) ?>">
+                </div>
+                <div class="col-md-3">
                     <label class="form-label" for="preorder_multiplier">Preorder Multiplier</label>
                     <input class="form-control" id="preorder_multiplier" name="preorder_multiplier" type="number" step="0.01" min="1" required value="<?= e((string)($concert['preorder_multiplier'] ?? '1')) ?>">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="normal_price">Normal Price</label>
+                    <input class="form-control" id="normal_price" name="normal_price" type="number" step="0.01" min="0" required value="<?= e((string)($seatPrices['normal'] ?? '')) ?>">
                 </div>
                 <div class="col-12">
                     <label class="form-label" for="image_url">Image URL</label>
