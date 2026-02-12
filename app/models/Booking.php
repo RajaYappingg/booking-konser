@@ -25,6 +25,64 @@ class Booking extends Model
         return $stmt->fetchAll();
     }
 
+    public function getAll(string $statusFilter = 'all'): array
+    {
+        $statusFilter = strtolower(trim($statusFilter));
+        $where = '';
+        $params = [];
+
+        if ($statusFilter === 'cancelled') {
+            $where = 'WHERE b.status = :status';
+            $params[':status'] = 'cancelled';
+        } elseif ($statusFilter === 'active') {
+            $where = 'WHERE b.status != :status';
+            $params[':status'] = 'cancelled';
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT b.id, b.booking_date, b.quantity, b.total_price, b.status, '
+            . 'b.voucher_code, b.discount_amount, b.payment_type, b.payment_provider, b.account_number, '
+            . 'GROUP_CONCAT(s.seat_code ORDER BY s.seat_code SEPARATOR ", ") AS seat_codes, '
+            . 'c.title, c.date, c.location, c.price, '
+            . 'u.name AS user_name, u.email AS user_email '
+            . 'FROM bookings b '
+            . 'JOIN concerts c ON b.concert_id = c.id '
+            . 'JOIN users u ON b.user_id = u.id '
+            . 'LEFT JOIN booking_seats bs ON bs.booking_id = b.id '
+            . 'LEFT JOIN seats s ON s.id = bs.seat_id '
+            . $where . ' '
+            . 'GROUP BY b.id, b.booking_date, b.quantity, b.total_price, b.status, b.voucher_code, '
+            . 'b.discount_amount, b.payment_type, b.payment_provider, b.account_number, '
+            . 'c.title, c.date, c.location, c.price, u.name, u.email '
+            . 'ORDER BY b.booking_date DESC'
+        );
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    public function getByConcert(int $concertId): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT b.id, b.booking_date, b.quantity, b.total_price, b.status, '
+            . 'b.voucher_code, b.discount_amount, b.payment_type, b.payment_provider, b.account_number, '
+            . 'GROUP_CONCAT(s.seat_code ORDER BY s.seat_code SEPARATOR ", ") AS seat_codes, '
+            . 'c.title, c.date, c.location, c.price, '
+            . 'u.name AS user_name, u.email AS user_email '
+            . 'FROM bookings b '
+            . 'JOIN concerts c ON b.concert_id = c.id '
+            . 'JOIN users u ON b.user_id = u.id '
+            . 'LEFT JOIN booking_seats bs ON bs.booking_id = b.id '
+            . 'LEFT JOIN seats s ON s.id = bs.seat_id '
+            . 'WHERE b.concert_id = :concert_id '
+            . 'GROUP BY b.id, b.booking_date, b.quantity, b.total_price, b.status, b.voucher_code, '
+            . 'b.discount_amount, b.payment_type, b.payment_provider, b.account_number, '
+            . 'c.title, c.date, c.location, c.price, u.name, u.email '
+            . 'ORDER BY b.booking_date DESC'
+        );
+        $stmt->execute([':concert_id' => $concertId]);
+        return $stmt->fetchAll();
+    }
+
     public function hasBooking(int $userId, int $concertId): bool
     {
         $stmt = $this->db->prepare(
@@ -73,6 +131,10 @@ class Booking extends Model
             return [false, 'Account number is required for bank transfer.'];
         }
 
+        if ($paymentType === 'ewallet' && $accountNumber === '') {
+            return [false, 'Phone number is required for e-wallet payments.'];
+        }
+
         if ($paymentType === 'ewallet') {
             $allowedProviders = ['gopay', 'shopeepay', 'dana', 'ovo'];
             if ($paymentProvider === '' || !in_array($paymentProvider, $allowedProviders, true)) {
@@ -82,7 +144,7 @@ class Booking extends Model
             $paymentProvider = '';
         }
 
-        if ($paymentType !== 'bank_transfer') {
+        if ($paymentType === 'qris') {
             $accountNumber = '';
         }
 
@@ -92,7 +154,7 @@ class Booking extends Model
             $this->db->beginTransaction();
 
             $concertStmt = $this->db->prepare(
-                'SELECT id, title, price, available_seats '
+                'SELECT id, title, price, available_seats, date, preorder_multiplier '
                 . 'FROM concerts '
                 . 'WHERE id = :id FOR UPDATE'
             );
@@ -121,10 +183,11 @@ class Booking extends Model
 
             $placeholders = implode(',', array_fill(0, count($seatIds), '?'));
             $seatStmt = $this->db->prepare(
-                'SELECT s.id, s.status, s.category_code, sc.price '
+                'SELECT s.id, s.seat_code, s.status, s.category_code, sc.price '
                 . 'FROM seats s '
                 . 'JOIN seat_categories sc ON sc.concert_id = s.concert_id AND sc.code = s.category_code '
                 . 'WHERE s.concert_id = ? AND s.id IN (' . $placeholders . ') '
+                . 'ORDER BY s.seat_code ASC '
                 . 'FOR UPDATE'
             );
             $seatStmt->execute(array_merge([$concertId], $seatIds));
@@ -156,9 +219,28 @@ class Booking extends Model
                 return [false, 'You already booked this concert.'];
             }
 
+            $stepMultiplier = isset($concert['preorder_multiplier']) ? (float)$concert['preorder_multiplier'] : 1.0;
+            if ($stepMultiplier < 1) {
+                $stepMultiplier = 1.0;
+            }
+
+            $preorderActive = false;
+            try {
+                $concertDate = new DateTime((string)$concert['date']);
+                $now = new DateTime();
+                $diffDays = (int)$now->diff($concertDate)->format('%r%a');
+                $preorderActive = $diffDays >= 30 && (($concert['status'] ?? 'upcoming') === 'coming_soon');
+            } catch (Exception $e) {
+                $preorderActive = false;
+            }
+
             $subtotal = 0.0;
-            foreach ($seats as $seat) {
-                $subtotal += (float)$seat['price'];
+            foreach ($seats as $index => $seat) {
+                $seatPrice = (float)$seat['price'];
+                if ($preorderActive) {
+                    $seatPrice *= pow($stepMultiplier, $index);
+                }
+                $subtotal += $seatPrice;
             }
             $discountAmount = 0.0;
             $voucherId = null;

@@ -88,6 +88,41 @@ class Seat extends Model
         }
     }
 
+    public function setCategoryPrices(int $concertId, array $prices): void
+    {
+        $categories = [
+            'vvip' => ['name' => 'VVIP', 'price' => $prices['vvip']],
+            'vip' => ['name' => 'VIP', 'price' => $prices['vip']],
+            'elite' => ['name' => 'Elite', 'price' => $prices['elite']],
+            'normal' => ['name' => 'Normal', 'price' => $prices['normal']],
+        ];
+
+        $this->db->beginTransaction();
+
+        try {
+            $upsert = $this->db->prepare(
+                'INSERT INTO seat_categories (concert_id, code, name, price) '
+                . 'VALUES (:concert_id, :code, :name, :price) '
+                . 'ON DUPLICATE KEY UPDATE name = VALUES(name), price = VALUES(price)'
+            );
+
+            foreach ($categories as $code => $category) {
+                $upsert->execute([
+                    ':concert_id' => $concertId,
+                    ':code' => $code,
+                    ':name' => $category['name'],
+                    ':price' => $category['price'],
+                ]);
+            }
+
+            $this->db->commit();
+        } catch (PDOException $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+        }
+    }
+
     public function getCategoriesByConcert(int $concertId): array
     {
         $stmt = $this->db->prepare(

@@ -49,6 +49,24 @@ function require_auth(): void
     }
 }
 
+function user_role(): ?string
+{
+    return $_SESSION['user']['role'] ?? null;
+}
+
+function is_admin(): bool
+{
+    return is_logged_in() && user_role() === 'admin';
+}
+
+function require_admin(): void
+{
+    if (!is_admin()) {
+        flash('danger', 'Admin access required.');
+        redirect('');
+    }
+}
+
 function view(string $template, array $data = []): void
 {
     extract($data, EXTR_SKIP);

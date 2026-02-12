@@ -8,6 +8,11 @@ class BookingController extends Controller
     {
         require_auth();
 
+        if (is_admin()) {
+            flash('warning', 'Admin account cannot access bookings.');
+            redirect('admin');
+        }
+
         $bookingModel = new Booking();
         $bookings = $bookingModel->getByUser((int)$_SESSION['user']['id']);
 
@@ -20,6 +25,11 @@ class BookingController extends Controller
     public function store(): void
     {
         require_auth();
+
+        if (is_admin()) {
+            flash('warning', 'Admin account cannot place bookings.');
+            redirect('admin');
+        }
 
         [$isValid, $errors, $clean] = Validation::validate($_POST, [
             'concert_id' => 'required|int',
@@ -64,6 +74,11 @@ class BookingController extends Controller
     public function cancel(string $id): void
     {
         require_auth();
+
+        if (is_admin()) {
+            flash('warning', 'Admin account cannot cancel bookings.');
+            redirect('admin');
+        }
 
         $bookingId = (int)$id;
         if ($bookingId < 1) {

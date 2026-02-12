@@ -59,11 +59,14 @@
                         $paymentLabel = 'QRIS';
                     } elseif ($paymentType === 'ewallet') {
                         $paymentLabel = 'E-wallet';
+                        $providerName = '';
                         if ($paymentProvider !== '' && isset($providerLabels[$paymentProvider])) {
-                            $paymentDetail = $providerLabels[$paymentProvider];
+                            $providerName = $providerLabels[$paymentProvider];
                         } elseif ($paymentProvider !== '') {
-                            $paymentDetail = strtoupper($paymentProvider);
+                            $providerName = strtoupper($paymentProvider);
                         }
+                        $phone = $accountNumber !== '' ? $accountNumber : '-';
+                        $paymentDetail = $providerName !== '' ? $providerName . ' · ' . $phone : $phone;
                     }
                     ?>
                     <tr>

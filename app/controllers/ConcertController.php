@@ -8,12 +8,20 @@ class ConcertController extends Controller
     {
         $concertModel = new Concert();
         $query = isset($_GET['q']) ? trim((string)$_GET['q']) : '';
-        $concerts = $query !== '' ? $concertModel->search($query) : $concertModel->all();
+        $genre = isset($_GET['genre']) ? trim((string)$_GET['genre']) : '';
+        $artist = isset($_GET['artist']) ? trim((string)$_GET['artist']) : '';
+        $concerts = $concertModel->filter($query, $genre, $artist);
+        $genres = $concertModel->getGenres();
+        $artists = $concertModel->getArtists();
 
         $this->view('concerts/index', [
             'title' => 'All Concerts',
             'concerts' => $concerts,
             'query' => $query,
+            'genres' => $genres,
+            'artists' => $artists,
+            'selectedGenre' => $genre,
+            'selectedArtist' => $artist,
         ]);
     }
 
@@ -33,6 +41,23 @@ class ConcertController extends Controller
         $seatModel->ensureSeatMap((int)$id, (float)$concert['price']);
         $seatCategories = $seatModel->getCategoriesByConcert((int)$id);
         $seats = $seatModel->getSeatsByConcert((int)$id);
+
+        $voucherModel = new Voucher();
+        $availableVouchers = $voucherModel->getActiveForClient();
+
+        $preorderMultiplier = isset($concert['preorder_multiplier']) ? (float)$concert['preorder_multiplier'] : 1.0;
+        if ($preorderMultiplier < 1) {
+            $preorderMultiplier = 1.0;
+        }
+        $preorderActive = false;
+        try {
+            $concertDate = new DateTime((string)$concert['date']);
+            $now = new DateTime();
+            $diffDays = (int)$now->diff($concertDate)->format('%r%a');
+            $preorderActive = $diffDays >= 30 && (($concert['status'] ?? 'upcoming') === 'coming_soon');
+        } catch (Exception $e) {
+            $preorderActive = false;
+        }
         if (is_logged_in()) {
             $bookingModel = new Booking();
             $alreadyBooked = $bookingModel->hasBooking((int)$_SESSION['user']['id'], (int)$id);
@@ -44,6 +69,9 @@ class ConcertController extends Controller
             'alreadyBooked' => $alreadyBooked,
             'seatCategories' => $seatCategories,
             'seats' => $seats,
+            'availableVouchers' => $availableVouchers,
+            'preorderActive' => $preorderActive,
+            'preorderMultiplier' => $preorderMultiplier,
         ]);
     }
 }
