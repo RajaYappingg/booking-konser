@@ -1,43 +1,48 @@
-<div class="row">
-    <div class="col-lg-12">
-        <div class="jumbotron bg-light p-5 rounded-lg mb-5">
-            <h1 class="display-5 fw-bold">Welcome to Concert Booking</h1>
-            <p class="lead">Discover and book your favorite concerts</p>
+<section class="hero mb-5 fade-up">
+    <div class="row align-items-center">
+        <div class="col-lg-7">
+            <h1 class="hero-title">Welcome to Concert Booking</h1>
+            <p class="hero-subtitle">Discover and book your favorite concerts with curated seat maps and smooth checkout.</p>
+        </div>
+        <div class="col-lg-5 text-lg-end mt-3 mt-lg-0">
+            <span class="badge-soft">Curated Events</span>
+            <span class="badge-soft ms-2">Seat Map Ready</span>
         </div>
     </div>
-</div>
+</section>
 
-<div class="row mb-4">
-    <div class="col-lg-12">
-        <h2 class="mb-4">All Concerts</h2>
-    </div>
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <h2 class="section-title mb-0">All Concerts</h2>
 </div>
 
 <div class="row">
     <?php if (!empty($concerts)): ?>
         <?php foreach ($concerts as $concert): ?>
             <div class="col-md-6 col-lg-3 mb-4">
-                <div class="card h-100 shadow-sm">
+                <div class="card concert-card h-100 fade-up">
                     <?php if (!empty($concert['image_url'])): ?>
                         <img src="<?= e($concert['image_url']) ?>" class="card-img-top" alt="<?= e($concert['title']) ?>" style="height: 200px; object-fit: cover;">
                     <?php else: ?>
-                        <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
-                            <span class="text-white">🎵</span>
+                        <div class="card-img-top d-flex align-items-center justify-content-center" style="height: 200px; background: #edf2ff;">
+                            <span class="fs-3">🎵</span>
                         </div>
                     <?php endif; ?>
                     <div class="card-body d-flex flex-column">
-                        <h5 class="card-title"><?= e($concert['title']) ?></h5>
-                        <p class="card-text text-muted"><?= e($concert['artist']) ?></p>
-                        <p class="card-text">
-                            <small class="text-muted">
-                                📍 <?= e($concert['location']) ?><br>
-                                📅 <?= date('M d, Y H:i', strtotime($concert['date'])) ?>
-                            </small>
+                        <div class="d-flex align-items-start justify-content-between mb-2">
+                            <div>
+                                <h5 class="card-title mb-1"><?= e($concert['title']) ?></h5>
+                                <p class="concert-meta mb-0"><?= e($concert['artist']) ?></p>
+                            </div>
+                            <span class="badge-soft"><?= e($concert['genre'] ?? 'Live') ?></span>
+                        </div>
+                        <p class="concert-meta mb-3">
+                            📍 <?= e($concert['location']) ?><br>
+                            📅 <?= date('M d, Y H:i', strtotime($concert['date'])) ?>
                         </p>
-                        <p class="card-text mt-auto">
+                        <div class="mt-auto d-flex align-items-center justify-content-between">
                             <strong class="text-primary">Rp. <?= number_format($concert['price'], 0, ',', '.') ?></strong>
-                        </p>
-                        <a href="<?= base_url('concerts/' . $concert['id']) ?>" class="btn btn-primary btn-sm">View Details</a>
+                            <a href="<?= base_url('concerts/' . $concert['id']) ?>" class="btn btn-brand btn-sm">View Details</a>
+                        </div>
                     </div>
                 </div>
             </div>

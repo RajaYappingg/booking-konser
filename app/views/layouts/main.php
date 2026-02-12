@@ -4,23 +4,137 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e($title ?? 'Concert Booking') ?></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        :root {
+            --brand: #1f6bff;
+            --brand-dark: #0f3fbf;
+            --ink: #0f172a;
+            --muted: #5f6b7a;
+            --surface: #ffffff;
+            --surface-alt: #f7f9fc;
+            --stroke: #e6ebf2;
+        }
+
         body {
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(80% 120% at 20% 0%, rgba(31, 107, 255, 0.12) 0%, rgba(31, 107, 255, 0) 55%),
+                radial-gradient(60% 80% at 90% 10%, rgba(255, 140, 0, 0.12) 0%, rgba(255, 140, 0, 0) 60%),
+                var(--surface-alt);
         }
         main {
             flex: 1;
         }
         footer {
-            background-color: #f8f9fa;
-            border-top: 1px solid #dee2e6;
+            background-color: var(--surface-alt);
+            border-top: 1px solid var(--stroke);
         }
         .navbar-brand {
-            font-weight: bold;
+            font-weight: 700;
+            font-size: 1.4rem;
+            letter-spacing: 0.2px;
+        }
+        .navbar {
+            background: linear-gradient(90deg, #0f47c9 0%, #1f6bff 60%, #3a87ff 100%);
+        }
+        .nav-link {
+            font-weight: 500;
+        }
+        .page-shell {
+            margin-top: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        .hero {
+            background: linear-gradient(120deg, #ffffff 0%, #f3f6ff 55%, #ffffff 100%);
+            border: 1px solid var(--stroke);
+            border-radius: 22px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: auto -20% -60% auto;
+            width: 260px;
+            height: 260px;
+            background: radial-gradient(circle, rgba(31, 107, 255, 0.25), rgba(31, 107, 255, 0));
+            filter: blur(2px);
+        }
+        .hero-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.2rem, 3.5vw, 3rem);
+            margin-bottom: 0.5rem;
+        }
+        .hero-subtitle {
+            color: var(--muted);
+            max-width: 520px;
+        }
+        .section-title {
+            font-weight: 700;
             font-size: 1.5rem;
+        }
+        .toolbar {
+            padding: 1rem 1.25rem;
+            background: var(--surface);
+            border: 1px solid var(--stroke);
+            border-radius: 16px;
+            box-shadow: 0 12px 25px rgba(15, 23, 42, 0.05);
+        }
+        .concert-card {
+            border-radius: 18px;
+            border: 1px solid var(--stroke);
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow: hidden;
+            background: var(--surface);
+        }
+        .concert-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 35px rgba(15, 23, 42, 0.12);
+        }
+        .concert-card .card-title {
+            font-weight: 600;
+        }
+        .concert-meta {
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+        .badge-soft {
+            background: #eef4ff;
+            color: var(--brand-dark);
+            border-radius: 999px;
+            padding: 0.35rem 0.75rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .btn-brand {
+            background: var(--brand);
+            border-color: var(--brand);
+            color: #ffffff;
+        }
+        .btn-brand:hover {
+            background: var(--brand-dark);
+            border-color: var(--brand-dark);
+        }
+        .fade-up {
+            animation: fadeUp 0.6s ease both;
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -78,7 +192,7 @@
 
     <!-- Main Content -->
     <main>
-        <div class="container my-4">
+        <div class="container page-shell">
             <?php require $templatePath; ?>
         </div>
     </main>
