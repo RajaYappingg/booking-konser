@@ -19,11 +19,63 @@ class Concert extends Model
 
         $stmt = $this->db->prepare(
             'SELECT * FROM concerts '
-            . 'WHERE title LIKE :q OR artist LIKE :q OR location LIKE :q '
+            . 'WHERE title LIKE :q OR artist LIKE :q OR location LIKE :q OR genre LIKE :q '
             . 'ORDER BY date ASC'
         );
         $stmt->execute([':q' => '%' . $query . '%']);
         return $stmt->fetchAll();
+    }
+
+    public function filter(string $query = '', string $genre = '', string $artist = ''): array
+    {
+        $query = trim($query);
+        $genre = trim($genre);
+        $artist = trim($artist);
+
+        $sql = 'SELECT * FROM concerts';
+        $conditions = [];
+        $params = [];
+
+        if ($query !== '') {
+            $conditions[] = '(title LIKE ? OR artist LIKE ? OR location LIKE ? OR genre LIKE ?)';
+            $likeValue = '%' . $query . '%';
+            $params[] = $likeValue;
+            $params[] = $likeValue;
+            $params[] = $likeValue;
+            $params[] = $likeValue;
+        }
+
+        if ($genre !== '') {
+            $conditions[] = 'genre = ?';
+            $params[] = $genre;
+        }
+
+        if ($artist !== '') {
+            $conditions[] = 'artist = ?';
+            $params[] = $artist;
+        }
+
+        if (!empty($conditions)) {
+            $sql .= ' WHERE ' . implode(' AND ', $conditions);
+        }
+
+        $sql .= ' ORDER BY date ASC';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    public function getGenres(): array
+    {
+        $stmt = $this->db->query('SELECT DISTINCT genre FROM concerts ORDER BY genre ASC');
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    public function getArtists(): array
+    {
+        $stmt = $this->db->query('SELECT DISTINCT artist FROM concerts ORDER BY artist ASC');
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
     public function featured(int $limit = 4): array

@@ -21,11 +21,16 @@ CREATE TABLE concerts (
     id INT PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(150) NOT NULL,
     artist VARCHAR(100) NOT NULL,
+    genre VARCHAR(50) NOT NULL,
     description TEXT,
     date DATETIME NOT NULL,
     location VARCHAR(200) NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     available_seats INT NOT NULL,
+    duration_minutes INT NOT NULL,
+    setlist TEXT,
+    status ENUM('upcoming', 'coming_soon') DEFAULT 'upcoming',
+    preorder_multiplier DECIMAL(5, 2) DEFAULT 2.00,
     image_url VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -101,11 +106,11 @@ CREATE TABLE vouchers (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Sample Concert Data
-INSERT INTO concerts (title, artist, description, date, location, price, available_seats, image_url) VALUES
-('Rock Festival 2026', 'The Rolling Stones', 'An amazing rock concert experience', '2026-03-15 19:00:00', 'Jakarta International Stadium', 500000, 100, '/images/rock-festival.jpg'),
-('Jazz Night', 'Miles Davis Tribute', 'Smooth jazz performance', '2026-03-20 20:00:00', 'Convention Center', 250000, 100, '/images/jazz-night.jpg'),
-('Pop Extravaganza', 'Taylor Swift', 'Pop music at its finest', '2026-04-10 18:00:00', 'Grand Arena', 750000, 100, '/images/pop-extravaganza.jpg'),
-('Classical Symphony', 'Indonesia Philharmonic', 'Classical music masterpiece', '2026-04-25 19:30:00', 'Concert Hall', 300000, 100, '/images/classical-symphony.jpg');
+INSERT INTO concerts (title, artist, genre, description, date, location, price, available_seats, duration_minutes, setlist, status, preorder_multiplier, image_url) VALUES
+('Rock Festival 2026', 'The Rolling Stones', 'Rock', 'An amazing rock concert experience', '2026-03-15 19:00:00', 'Jakarta International Stadium', 500000, 100, 120, 'Start Me Up, Tumbling Dice, Angie, Satisfaction', 'upcoming', 2.00, '/images/rock-festival.jpg'),
+('Jazz Night', 'Miles Davis Tribute', 'Jazz', 'Smooth jazz performance', '2026-03-20 20:00:00', 'Convention Center', 250000, 100, 90, 'So What, Freddie Freeloader, Blue in Green, All Blues', 'upcoming', 2.00, '/images/jazz-night.jpg'),
+('Pop Extravaganza', 'Taylor Swift', 'Pop', 'Pop music at its finest', '2026-04-10 18:00:00', 'Grand Arena', 750000, 100, 140, 'Blank Space, Style, Shake It Off, Love Story', 'coming_soon', 2.00, '/images/pop-extravaganza.jpg'),
+('Classical Symphony', 'Indonesia Philharmonic', 'Classical', 'Classical music masterpiece', '2026-04-25 19:30:00', 'Concert Hall', 300000, 100, 110, 'Symphony No.5, Canon in D, Four Seasons', 'coming_soon', 2.00, '/images/classical-symphony.jpg');
 
 -- Sample Vouchers
 INSERT INTO vouchers (code, discount_type, amount, max_uses, expires_at, active) VALUES

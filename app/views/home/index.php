@@ -9,13 +9,13 @@
 
 <div class="row mb-4">
     <div class="col-lg-12">
-        <h2 class="mb-4">Featured Concerts</h2>
+        <h2 class="mb-4">All Concerts</h2>
     </div>
 </div>
 
 <div class="row">
-    <?php if (!empty($featured)): ?>
-        <?php foreach ($featured as $concert): ?>
+    <?php if (!empty($concerts)): ?>
+        <?php foreach ($concerts as $concert): ?>
             <div class="col-md-6 col-lg-3 mb-4">
                 <div class="card h-100 shadow-sm">
                     <?php if (!empty($concert['image_url'])): ?>

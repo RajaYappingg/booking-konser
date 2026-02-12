@@ -2,8 +2,11 @@
     <div class="col-lg-7">
         <h1 class="h3 mb-2"><?= e($concert['title']) ?></h1>
         <p class="text-muted mb-1">Artist: <?= e($concert['artist']) ?></p>
+        <p class="text-muted mb-1">Genre: <?= e($concert['genre'] ?? '-') ?></p>
         <p class="text-muted mb-1">Venue: <?= e($concert['location']) ?></p>
-        <p class="text-muted mb-3">Date: <?= e(date('d M Y, H:i', strtotime($concert['date']))) ?></p>
+        <p class="text-muted mb-1">Date: <?= e(date('d M Y', strtotime($concert['date']))) ?></p>
+        <p class="text-muted mb-1">Showtime: <?= e(date('H:i', strtotime($concert['date']))) ?></p>
+        <p class="text-muted mb-3">Duration: <?= e((string)($concert['duration_minutes'] ?? 0)) ?> minutes</p>
 
         <?php if (!empty($concert['description'])): ?>
             <p class="mb-4"><?= e($concert['description']) ?></p>
@@ -12,7 +15,15 @@
         <div class="d-flex flex-wrap gap-3">
             <div class="badge bg-light text-dark">Price: Rp <?= e(number_format((float)$concert['price'], 0, ',', '.')) ?></div>
             <div class="badge bg-light text-dark">Seats left: <?= e((string)$concert['available_seats']) ?></div>
+            <div class="badge bg-light text-dark">Status: <?= e(($concert['status'] ?? 'upcoming') === 'coming_soon' ? 'Coming Soon' : 'Upcoming') ?></div>
         </div>
+
+        <?php if (!empty($concert['setlist'])): ?>
+            <div class="mt-4">
+                <h2 class="h6">Setlist</h2>
+                <p class="mb-0 text-muted"><?= e($concert['setlist']) ?></p>
+            </div>
+        <?php endif; ?>
     </div>
 
     <div class="col-lg-5">
@@ -34,6 +45,8 @@
                     foreach ($seatCategories as $category) {
                         $categoryMap[$category['code']] = $category;
                     }
+
+                    $stepMultiplier = !empty($preorderActive) ? (float)$preorderMultiplier : 1.0;
 
                     $seatRows = [];
                     foreach ($seats as $seat) {
@@ -60,6 +73,10 @@
                                 <span class="badge bg-secondary">Booked</span>
                                 <span class="badge bg-primary">Selected</span>
                             </div>
+
+                            <?php if (!empty($preorderActive)): ?>
+                                <div class="alert alert-warning py-2">Pre-order active: each additional seat is multiplied by x<?= e(number_format($stepMultiplier, 1)) ?>.</div>
+                            <?php endif; ?>
 
                             <div class="seat-map">
                                 <?php foreach ($seatRows as $row => $rowSeats): ?>
@@ -220,9 +237,18 @@
 
                             const updateSummary = () => {
                                 const selected = Array.from(document.querySelectorAll('.seat-selected'));
-                                const seatIds = selected.map((seat) => seat.dataset.seatId);
-                                const seatCodes = selected.map((seat) => seat.dataset.code);
-                                const total = selected.reduce((sum, seat) => sum + Number(seat.dataset.price || 0), 0);
+                                const sorted = selected.sort((a, b) => a.dataset.code.localeCompare(b.dataset.code));
+                                const seatIds = sorted.map((seat) => seat.dataset.seatId);
+                                const seatCodes = sorted.map((seat) => seat.dataset.code);
+                                const isPreorder = Boolean(<?= !empty($preorderActive) ? 'true' : 'false' ?>);
+                                const stepMultiplier = Number(<?= !empty($preorderActive) ? json_encode($stepMultiplier) : '1' ?>);
+                                const total = sorted.reduce((sum, seat, index) => {
+                                    let price = Number(seat.dataset.price || 0);
+                                    if (isPreorder) {
+                                        price *= Math.pow(stepMultiplier, index);
+                                    }
+                                    return sum + price;
+                                }, 0);
 
                                 seatIdsInput.value = seatIds.join(',');
                                 seatList.textContent = seatCodes.length ? seatCodes.join(', ') : '-';

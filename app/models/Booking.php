@@ -92,7 +92,7 @@ class Booking extends Model
             $this->db->beginTransaction();
 
             $concertStmt = $this->db->prepare(
-                'SELECT id, title, price, available_seats '
+                'SELECT id, title, price, available_seats, date, preorder_multiplier '
                 . 'FROM concerts '
                 . 'WHERE id = :id FOR UPDATE'
             );
@@ -121,10 +121,11 @@ class Booking extends Model
 
             $placeholders = implode(',', array_fill(0, count($seatIds), '?'));
             $seatStmt = $this->db->prepare(
-                'SELECT s.id, s.status, s.category_code, sc.price '
+                'SELECT s.id, s.seat_code, s.status, s.category_code, sc.price '
                 . 'FROM seats s '
                 . 'JOIN seat_categories sc ON sc.concert_id = s.concert_id AND sc.code = s.category_code '
                 . 'WHERE s.concert_id = ? AND s.id IN (' . $placeholders . ') '
+                . 'ORDER BY s.seat_code ASC '
                 . 'FOR UPDATE'
             );
             $seatStmt->execute(array_merge([$concertId], $seatIds));
@@ -156,9 +157,28 @@ class Booking extends Model
                 return [false, 'You already booked this concert.'];
             }
 
+            $stepMultiplier = isset($concert['preorder_multiplier']) ? (float)$concert['preorder_multiplier'] : 1.0;
+            if ($stepMultiplier < 1) {
+                $stepMultiplier = 1.0;
+            }
+
+            $preorderActive = false;
+            try {
+                $concertDate = new DateTime((string)$concert['date']);
+                $now = new DateTime();
+                $diffDays = (int)$now->diff($concertDate)->format('%r%a');
+                $preorderActive = $diffDays >= 30 && (($concert['status'] ?? 'upcoming') === 'coming_soon');
+            } catch (Exception $e) {
+                $preorderActive = false;
+            }
+
             $subtotal = 0.0;
-            foreach ($seats as $seat) {
-                $subtotal += (float)$seat['price'];
+            foreach ($seats as $index => $seat) {
+                $seatPrice = (float)$seat['price'];
+                if ($preorderActive) {
+                    $seatPrice *= pow($stepMultiplier, $index);
+                }
+                $subtotal += $seatPrice;
             }
             $discountAmount = 0.0;
             $voucherId = null;

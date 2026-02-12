@@ -7,11 +7,11 @@ class HomeController extends Controller
     public function index(): void
     {
         $concertModel = new Concert();
-        $featured = $concertModel->featured();
+        $concerts = $concertModel->all();
 
         $this->view('home/index', [
             'title' => 'Concert Booking',
-            'featured' => $featured,
+            'concerts' => $concerts,
         ]);
     }
 }
