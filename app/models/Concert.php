@@ -6,7 +6,14 @@ class Concert extends Model
 {
     public function all(): array
     {
-        $stmt = $this->db->query('SELECT * FROM concerts ORDER BY date ASC');
+        $stmt = $this->db->query(
+            'SELECT c.*, prices.min_price AS min_seat_price, prices.max_price AS max_seat_price '
+            . 'FROM concerts c '
+            . 'LEFT JOIN (SELECT concert_id, MIN(price) AS min_price, MAX(price) AS max_price '
+            . 'FROM seat_categories GROUP BY concert_id) prices '
+            . 'ON prices.concert_id = c.id '
+            . 'ORDER BY c.date ASC'
+        );
         return $stmt->fetchAll();
     }
 

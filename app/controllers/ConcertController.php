@@ -42,6 +42,9 @@ class ConcertController extends Controller
         $seatCategories = $seatModel->getCategoriesByConcert((int)$id);
         $seats = $seatModel->getSeatsByConcert((int)$id);
 
+        $voucherModel = new Voucher();
+        $availableVouchers = $voucherModel->getActiveForClient();
+
         $preorderMultiplier = isset($concert['preorder_multiplier']) ? (float)$concert['preorder_multiplier'] : 1.0;
         if ($preorderMultiplier < 1) {
             $preorderMultiplier = 1.0;
@@ -66,6 +69,7 @@ class ConcertController extends Controller
             'alreadyBooked' => $alreadyBooked,
             'seatCategories' => $seatCategories,
             'seats' => $seats,
+            'availableVouchers' => $availableVouchers,
             'preorderActive' => $preorderActive,
             'preorderMultiplier' => $preorderMultiplier,
         ]);

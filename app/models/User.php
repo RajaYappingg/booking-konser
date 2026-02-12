@@ -27,4 +27,14 @@ class User extends Model
 
         return (int)$this->db->lastInsertId();
     }
+
+    public function all(): array
+    {
+        $stmt = $this->db->query(
+            'SELECT id, name, email, phone, city, role, created_at '
+            . 'FROM users '
+            . 'ORDER BY created_at DESC'
+        );
+        return $stmt->fetchAll();
+    }
 }

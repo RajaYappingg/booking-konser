@@ -1,19 +1,18 @@
 <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 gap-3">
     <div>
-        <h1 class="h3 mb-1">All Bookings</h1>
-        <p class="text-muted">Review every booking made by users.</p>
+        <h1 class="h3 mb-1">Concert Payments</h1>
+        <p class="text-muted">Payments for <?= e((string)$concert['title']) ?>.</p>
     </div>
-    <div class="d-flex flex-column flex-sm-row gap-2">
-        <form method="get" action="<?= base_url('admin/bookings') ?>" class="d-flex gap-2">
-            <?php $selected = $statusFilter ?? 'all'; ?>
-            <select name="status" class="form-select">
-                <option value="all" <?= $selected === 'all' ? 'selected' : '' ?>>All</option>
-                <option value="active" <?= $selected === 'active' ? 'selected' : '' ?>>Not Cancelled</option>
-                <option value="cancelled" <?= $selected === 'cancelled' ? 'selected' : '' ?>>Cancelled Only</option>
-            </select>
-            <button type="submit" class="btn btn-outline-primary">Filter</button>
-        </form>
-        <a class="btn btn-outline-primary" href="<?= base_url('admin') ?>">Back to Dashboard</a>
+    <a class="btn btn-outline-primary" href="<?= base_url('admin/concerts') ?>">Back to Concerts</a>
+</div>
+
+<div class="card shadow-sm border-0 mb-3">
+    <div class="card-body">
+        <div class="row g-2">
+            <div class="col-md-4"><strong>Artist:</strong> <?= e((string)$concert['artist']) ?></div>
+            <div class="col-md-4"><strong>Date:</strong> <?= e(date('d M Y, H:i', strtotime((string)$concert['date']))) ?></div>
+            <div class="col-md-4"><strong>Venue:</strong> <?= e((string)$concert['location']) ?></div>
+        </div>
     </div>
 </div>
 
@@ -25,8 +24,6 @@
                     <th>ID</th>
                     <th>User</th>
                     <th>Email</th>
-                    <th>Concert</th>
-                    <th>Date</th>
                     <th>Qty</th>
                     <th>Seats</th>
                     <th class="text-end">Discount</th>
@@ -38,7 +35,7 @@
             <tbody>
                 <?php if (empty($bookings)): ?>
                     <tr>
-                        <td colspan="11" class="text-center text-muted py-4">No bookings found.</td>
+                        <td colspan="9" class="text-center text-muted py-4">No bookings found.</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($bookings as $booking): ?>
@@ -88,8 +85,6 @@
                             <td><?= e((string)$booking['id']) ?></td>
                             <td><?= e((string)$booking['user_name']) ?></td>
                             <td><?= e((string)$booking['user_email']) ?></td>
-                            <td class="fw-semibold"><?= e((string)$booking['title']) ?></td>
-                            <td><?= e(date('d M Y, H:i', strtotime((string)$booking['date']))) ?></td>
                             <td><?= e((string)$booking['quantity']) ?></td>
                             <td><?= e($seatCodes !== '' ? $seatCodes : '-') ?></td>
                             <td class="text-end">Rp <?= e(number_format((float)$booking['discount_amount'], 0, ',', '.')) ?></td>

@@ -155,9 +155,11 @@
                         <a class="nav-link" href="<?= base_url('concerts') ?>">Concerts</a>
                     </li>
                     <?php if (is_logged_in()): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?= base_url('bookings') ?>">My Bookings</a>
-                        </li>
+                        <?php if (!is_admin()): ?>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?= base_url('bookings') ?>">My Bookings</a>
+                            </li>
+                        <?php endif; ?>
                         <?php if (is_admin()): ?>
                             <li class="nav-item">
                                 <a class="nav-link" href="<?= base_url('admin') ?>">Admin</a>

@@ -1,5 +1,17 @@
 <div class="row g-4">
     <div class="col-lg-7">
+        <?php if (!empty($concert['image_url'])): ?>
+            <img
+                src="<?= e($concert['image_url']) ?>"
+                alt="<?= e($concert['title']) ?>"
+                class="img-fluid rounded mb-3"
+                style="max-height: 360px; width: 100%; object-fit: cover;"
+            >
+        <?php else: ?>
+            <div class="rounded mb-3 d-flex align-items-center justify-content-center" style="height: 240px; background: #edf2ff;">
+                <span class="fs-1">🎵</span>
+            </div>
+        <?php endif; ?>
         <h1 class="h3 mb-2"><?= e($concert['title']) ?></h1>
         <p class="text-muted mb-1">Artist: <?= e($concert['artist']) ?></p>
         <p class="text-muted mb-1">Genre: <?= e($concert['genre'] ?? '-') ?></p>
@@ -34,6 +46,8 @@
                 <?php if (!is_logged_in()): ?>
                     <div class="alert alert-warning">Please log in to book tickets.</div>
                     <a class="btn btn-primary w-100" href="<?= base_url('login') ?>">Login</a>
+                <?php elseif (is_admin()): ?>
+                    <div class="alert alert-info">Admin account cannot place bookings.</div>
                 <?php elseif ($alreadyBooked): ?>
                     <div class="alert alert-info">You already placed an order for this concert.</div>
                     <a class="btn btn-outline-primary w-100" href="<?= base_url('bookings') ?>">View My Booking</a>
@@ -121,6 +135,8 @@
                         <div class="mb-3">
                             <label class="form-label">Subtotal</label>
                             <div class="form-control" id="seat_total">Rp 0</div>
+                            <div class="form-text" id="voucher_note"></div>
+                            <div class="form-text" id="subtotal_note"></div>
                         </div>
 
                         <div class="mb-3">
@@ -146,7 +162,7 @@
                         </div>
 
                         <div class="mb-3" id="account_number_group" style="display: none;">
-                            <label for="account_number" class="form-label">Account Number</label>
+                            <label for="account_number" class="form-label" id="account_number_label">Account Number</label>
                             <input
                                 type="text"
                                 class="form-control"
@@ -170,7 +186,12 @@
                         </div>
 
                         <div class="alert alert-info d-none" id="qris_note">
-                            QRIS will be shown after booking is confirmed.
+                            <div class="fw-semibold mb-2">Scan this QRIS code to pay.</div>
+                            <img
+                                src="<?= base_url('images/qris.png') ?>"
+                                alt="QRIS payment"
+                                style="max-width: 180px; width: 100%; height: auto;"
+                            >
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100" id="confirm_button" disabled>Confirm Booking</button>
@@ -230,9 +251,47 @@
                             const seatTotal = document.getElementById('seat_total');
                             const seatError = document.getElementById('seat_error');
                             const confirmButton = document.getElementById('confirm_button');
+                            const voucherInput = document.getElementById('voucher_code');
+                            const voucherNote = document.getElementById('voucher_note');
+                            const subtotalNote = document.getElementById('subtotal_note');
+                            const voucherList = <?= json_encode($availableVouchers ?? []) ?>;
+                            const voucherMap = Array.isArray(voucherList)
+                                ? voucherList.reduce((map, voucher) => {
+                                    const code = String(voucher.code || '').toUpperCase();
+                                    if (code !== '') {
+                                        map[code] = voucher;
+                                    }
+                                    return map;
+                                }, {})
+                                : {};
 
                             const formatCurrency = (value) => {
                                 return 'Rp ' + new Intl.NumberFormat('id-ID').format(value);
+                            };
+
+                            const applyVoucher = (baseTotal) => {
+                                if (!voucherInput) {
+                                    return { total: baseTotal, discount: 0, valid: false };
+                                }
+
+                                const code = voucherInput.value.trim().toUpperCase();
+                                if (code === '' || !voucherMap[code]) {
+                                    return { total: baseTotal, discount: 0, valid: false };
+                                }
+
+                                const voucher = voucherMap[code];
+                                let discount = 0;
+                                if (voucher.discount_type === 'percent') {
+                                    discount = baseTotal * (Number(voucher.amount || 0) / 100);
+                                } else {
+                                    discount = Number(voucher.amount || 0);
+                                }
+
+                                if (discount > baseTotal) {
+                                    discount = baseTotal;
+                                }
+
+                                return { total: baseTotal - discount, discount, valid: true, code };
                             };
 
                             const updateSummary = () => {
@@ -242,18 +301,29 @@
                                 const seatCodes = sorted.map((seat) => seat.dataset.code);
                                 const isPreorder = Boolean(<?= !empty($preorderActive) ? 'true' : 'false' ?>);
                                 const stepMultiplier = Number(<?= !empty($preorderActive) ? json_encode($stepMultiplier) : '1' ?>);
-                                const total = sorted.reduce((sum, seat, index) => {
+                                const baseTotal = sorted.reduce((sum, seat, index) => {
                                     let price = Number(seat.dataset.price || 0);
                                     if (isPreorder) {
                                         price *= Math.pow(stepMultiplier, index);
                                     }
                                     return sum + price;
                                 }, 0);
+                                const voucherResult = applyVoucher(baseTotal);
 
                                 seatIdsInput.value = seatIds.join(',');
                                 seatList.textContent = seatCodes.length ? seatCodes.join(', ') : '-';
                                 seatCount.textContent = String(seatCodes.length);
-                                seatTotal.textContent = formatCurrency(total);
+                                seatTotal.textContent = formatCurrency(voucherResult.total);
+                                if (voucherNote) {
+                                    voucherNote.textContent = voucherResult.valid
+                                        ? 'Voucher applied: -' + formatCurrency(voucherResult.discount)
+                                        : '';
+                                }
+                                if (subtotalNote) {
+                                    subtotalNote.textContent = voucherResult.valid
+                                        ? 'Base subtotal: ' + formatCurrency(baseTotal)
+                                        : '';
+                                }
                                 if (confirmButton) {
                                     confirmButton.disabled = seatCodes.length === 0;
                                 }
@@ -287,6 +357,7 @@
                             const walletGroup = document.getElementById('wallet_provider_group');
                             const qrisNote = document.getElementById('qris_note');
                             const accountInput = document.getElementById('account_number');
+                            const accountLabel = document.getElementById('account_number_label');
                             const providerSelect = document.getElementById('payment_provider');
 
                             if (!typeSelect || !accountGroup || !walletGroup) {
@@ -299,16 +370,23 @@
                                 const isWallet = type === 'ewallet';
                                 const isQris = type === 'qris';
 
-                                accountGroup.style.display = isBank ? '' : 'none';
+                                accountGroup.style.display = (isBank || isWallet) ? '' : 'none';
                                 walletGroup.style.display = isWallet ? '' : 'none';
                                 if (qrisNote) {
                                     qrisNote.classList.toggle('d-none', !isQris);
                                 }
 
-                                accountInput.required = isBank;
+                                accountInput.required = isBank || isWallet;
                                 providerSelect.required = isWallet;
 
-                                if (!isBank) {
+                                if (accountLabel) {
+                                    accountLabel.textContent = isWallet ? 'Phone Number' : 'Account Number';
+                                }
+                                if (accountInput) {
+                                    accountInput.placeholder = isWallet ? 'Phone number (e-wallet)' : 'Bank account number';
+                                }
+
+                                if (!isBank && !isWallet) {
                                     accountInput.value = '';
                                 }
 
@@ -318,6 +396,9 @@
                             };
 
                             typeSelect.addEventListener('change', updateFields);
+                            if (voucherInput) {
+                                voucherInput.addEventListener('input', updateSummary);
+                            }
                             updateFields();
                             updateSummary();
                         })();

@@ -25,7 +25,42 @@ class Booking extends Model
         return $stmt->fetchAll();
     }
 
-    public function getAll(): array
+    public function getAll(string $statusFilter = 'all'): array
+    {
+        $statusFilter = strtolower(trim($statusFilter));
+        $where = '';
+        $params = [];
+
+        if ($statusFilter === 'cancelled') {
+            $where = 'WHERE b.status = :status';
+            $params[':status'] = 'cancelled';
+        } elseif ($statusFilter === 'active') {
+            $where = 'WHERE b.status != :status';
+            $params[':status'] = 'cancelled';
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT b.id, b.booking_date, b.quantity, b.total_price, b.status, '
+            . 'b.voucher_code, b.discount_amount, b.payment_type, b.payment_provider, b.account_number, '
+            . 'GROUP_CONCAT(s.seat_code ORDER BY s.seat_code SEPARATOR ", ") AS seat_codes, '
+            . 'c.title, c.date, c.location, c.price, '
+            . 'u.name AS user_name, u.email AS user_email '
+            . 'FROM bookings b '
+            . 'JOIN concerts c ON b.concert_id = c.id '
+            . 'JOIN users u ON b.user_id = u.id '
+            . 'LEFT JOIN booking_seats bs ON bs.booking_id = b.id '
+            . 'LEFT JOIN seats s ON s.id = bs.seat_id '
+            . $where . ' '
+            . 'GROUP BY b.id, b.booking_date, b.quantity, b.total_price, b.status, b.voucher_code, '
+            . 'b.discount_amount, b.payment_type, b.payment_provider, b.account_number, '
+            . 'c.title, c.date, c.location, c.price, u.name, u.email '
+            . 'ORDER BY b.booking_date DESC'
+        );
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    public function getByConcert(int $concertId): array
     {
         $stmt = $this->db->prepare(
             'SELECT b.id, b.booking_date, b.quantity, b.total_price, b.status, '
@@ -38,12 +73,13 @@ class Booking extends Model
             . 'JOIN users u ON b.user_id = u.id '
             . 'LEFT JOIN booking_seats bs ON bs.booking_id = b.id '
             . 'LEFT JOIN seats s ON s.id = bs.seat_id '
+            . 'WHERE b.concert_id = :concert_id '
             . 'GROUP BY b.id, b.booking_date, b.quantity, b.total_price, b.status, b.voucher_code, '
             . 'b.discount_amount, b.payment_type, b.payment_provider, b.account_number, '
             . 'c.title, c.date, c.location, c.price, u.name, u.email '
             . 'ORDER BY b.booking_date DESC'
         );
-        $stmt->execute();
+        $stmt->execute([':concert_id' => $concertId]);
         return $stmt->fetchAll();
     }
 
@@ -95,6 +131,10 @@ class Booking extends Model
             return [false, 'Account number is required for bank transfer.'];
         }
 
+        if ($paymentType === 'ewallet' && $accountNumber === '') {
+            return [false, 'Phone number is required for e-wallet payments.'];
+        }
+
         if ($paymentType === 'ewallet') {
             $allowedProviders = ['gopay', 'shopeepay', 'dana', 'ovo'];
             if ($paymentProvider === '' || !in_array($paymentProvider, $allowedProviders, true)) {
@@ -104,7 +144,7 @@ class Booking extends Model
             $paymentProvider = '';
         }
 
-        if ($paymentType !== 'bank_transfer') {
+        if ($paymentType === 'qris') {
             $accountNumber = '';
         }
 

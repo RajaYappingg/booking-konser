@@ -250,11 +250,52 @@ class AdminController extends Controller
         require_admin();
 
         $bookingModel = new Booking();
-        $bookings = $bookingModel->getAll();
+        $status = isset($_GET['status']) ? trim((string)$_GET['status']) : 'all';
+        if (!in_array($status, ['all', 'active', 'cancelled'], true)) {
+            $status = 'all';
+        }
+
+        $bookings = $bookingModel->getAll($status);
 
         $this->view('admin/bookings/index', [
             'title' => 'All Bookings',
             'bookings' => $bookings,
+            'statusFilter' => $status,
+        ]);
+    }
+
+    public function concertBookings(string $id): void
+    {
+        require_admin();
+
+        $concertModel = new Concert();
+        $concert = $concertModel->find((int)$id);
+
+        if (!$concert) {
+            flash('warning', 'Concert not found.');
+            redirect('admin/concerts');
+        }
+
+        $bookingModel = new Booking();
+        $bookings = $bookingModel->getByConcert((int)$id);
+
+        $this->view('admin/concerts/bookings', [
+            'title' => 'Concert Payments',
+            'concert' => $concert,
+            'bookings' => $bookings,
+        ]);
+    }
+
+    public function users(): void
+    {
+        require_admin();
+
+        $userModel = new User();
+        $users = $userModel->all();
+
+        $this->view('admin/users/index', [
+            'title' => 'All Users',
+            'users' => $users,
         ]);
     }
 

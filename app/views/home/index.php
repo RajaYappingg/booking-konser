@@ -40,7 +40,18 @@
                             📅 <?= date('M d, Y H:i', strtotime($concert['date'])) ?>
                         </p>
                         <div class="mt-auto d-flex align-items-center justify-content-between">
-                            <strong class="text-primary">Rp. <?= number_format($concert['price'], 0, ',', '.') ?></strong>
+                            <?php
+                            $minPrice = $concert['min_seat_price'] ?? null;
+                            $maxPrice = $concert['max_seat_price'] ?? null;
+                            $hasRange = $minPrice !== null && $maxPrice !== null;
+                            $priceText = 'Rp. ' . number_format((float)$concert['price'], 0, ',', '.');
+                            if ($hasRange) {
+                                $minText = 'Rp. ' . number_format((float)$minPrice, 0, ',', '.');
+                                $maxText = 'Rp. ' . number_format((float)$maxPrice, 0, ',', '.');
+                                $priceText = $minPrice === $maxPrice ? $minText : $minText . ' - ' . $maxText;
+                            }
+                            ?>
+                            <strong class="text-primary"><?= e($priceText) ?></strong>
                             <a href="<?= base_url('concerts/' . $concert['id']) ?>" class="btn btn-brand btn-sm">View Details</a>
                         </div>
                     </div>

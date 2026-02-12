@@ -40,6 +40,7 @@
                             <td class="text-end"><?= e((string)$concert['available_seats']) ?></td>
                             <td class="text-end">
                                 <a class="btn btn-sm btn-outline-primary" href="<?= base_url('admin/concerts/' . $concert['id'] . '/edit') ?>">Edit</a>
+                                <a class="btn btn-sm btn-outline-secondary" href="<?= base_url('admin/concerts/' . $concert['id'] . '/bookings') ?>">Payments</a>
                                 <form action="<?= base_url('admin/concerts/' . $concert['id'] . '/delete') ?>" method="post" class="d-inline" onsubmit="return confirm('Delete this concert?');">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                 </form>

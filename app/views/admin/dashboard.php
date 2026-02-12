@@ -7,6 +7,7 @@
         <a class="btn btn-outline-primary" href="<?= base_url('admin/concerts') ?>">Manage Concerts</a>
         <a class="btn btn-outline-primary" href="<?= base_url('admin/vouchers') ?>">Manage Vouchers</a>
         <a class="btn btn-outline-primary" href="<?= base_url('admin/bookings') ?>">View Bookings</a>
+        <a class="btn btn-outline-primary" href="<?= base_url('admin/users') ?>">View Users</a>
     </div>
 </div>
 

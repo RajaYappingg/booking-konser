@@ -34,6 +34,20 @@ class Voucher extends Model
         return $voucher ?: null;
     }
 
+    public function getActiveForClient(): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT code, discount_type, amount '
+            . 'FROM vouchers '
+            . 'WHERE active = 1 '
+            . 'AND (expires_at IS NULL OR expires_at > NOW()) '
+            . 'AND (max_uses IS NULL OR used_count < max_uses) '
+            . 'ORDER BY code ASC'
+        );
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
     public function incrementUsage(int $id): void
     {
         $stmt = $this->db->prepare(
