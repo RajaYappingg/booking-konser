@@ -10,6 +10,64 @@ class Concert extends Model
         return $stmt->fetchAll();
     }
 
+    public function create(array $data): int
+    {
+        $stmt = $this->db->prepare(
+            'INSERT INTO concerts (title, artist, genre, description, date, location, price, available_seats, duration_minutes, setlist, status, preorder_multiplier, image_url) '
+            . 'VALUES (:title, :artist, :genre, :description, :date, :location, :price, :available_seats, :duration_minutes, :setlist, :status, :preorder_multiplier, :image_url)'
+        );
+        $stmt->execute([
+            ':title' => $data['title'],
+            ':artist' => $data['artist'],
+            ':genre' => $data['genre'],
+            ':description' => $data['description'],
+            ':date' => $data['date'],
+            ':location' => $data['location'],
+            ':price' => $data['price'],
+            ':available_seats' => $data['available_seats'],
+            ':duration_minutes' => $data['duration_minutes'],
+            ':setlist' => $data['setlist'],
+            ':status' => $data['status'],
+            ':preorder_multiplier' => $data['preorder_multiplier'],
+            ':image_url' => $data['image_url'],
+        ]);
+
+        return (int)$this->db->lastInsertId();
+    }
+
+    public function update(int $id, array $data): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE concerts SET title = :title, artist = :artist, genre = :genre, description = :description, '
+            . 'date = :date, location = :location, price = :price, available_seats = :available_seats, '
+            . 'duration_minutes = :duration_minutes, setlist = :setlist, status = :status, '
+            . 'preorder_multiplier = :preorder_multiplier, image_url = :image_url '
+            . 'WHERE id = :id'
+        );
+        $stmt->execute([
+            ':title' => $data['title'],
+            ':artist' => $data['artist'],
+            ':genre' => $data['genre'],
+            ':description' => $data['description'],
+            ':date' => $data['date'],
+            ':location' => $data['location'],
+            ':price' => $data['price'],
+            ':available_seats' => $data['available_seats'],
+            ':duration_minutes' => $data['duration_minutes'],
+            ':setlist' => $data['setlist'],
+            ':status' => $data['status'],
+            ':preorder_multiplier' => $data['preorder_multiplier'],
+            ':image_url' => $data['image_url'],
+            ':id' => $id,
+        ]);
+    }
+
+    public function delete(int $id): void
+    {
+        $stmt = $this->db->prepare('DELETE FROM concerts WHERE id = :id');
+        $stmt->execute([':id' => $id]);
+    }
+
     public function search(string $query): array
     {
         $query = trim($query);

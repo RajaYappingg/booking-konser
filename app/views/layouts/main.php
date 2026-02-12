@@ -158,6 +158,11 @@
                         <li class="nav-item">
                             <a class="nav-link" href="<?= base_url('bookings') ?>">My Bookings</a>
                         </li>
+                        <?php if (is_admin()): ?>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?= base_url('admin') ?>">Admin</a>
+                            </li>
+                        <?php endif; ?>
                         <li class="nav-item">
                             <form action="<?= base_url('logout') ?>" method="post" class="d-inline">
                                 <button type="submit" class="nav-link btn btn-link p-0">Logout</button>

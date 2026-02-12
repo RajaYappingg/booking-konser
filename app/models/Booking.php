@@ -25,6 +25,28 @@ class Booking extends Model
         return $stmt->fetchAll();
     }
 
+    public function getAll(): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT b.id, b.booking_date, b.quantity, b.total_price, b.status, '
+            . 'b.voucher_code, b.discount_amount, b.payment_type, b.payment_provider, b.account_number, '
+            . 'GROUP_CONCAT(s.seat_code ORDER BY s.seat_code SEPARATOR ", ") AS seat_codes, '
+            . 'c.title, c.date, c.location, c.price, '
+            . 'u.name AS user_name, u.email AS user_email '
+            . 'FROM bookings b '
+            . 'JOIN concerts c ON b.concert_id = c.id '
+            . 'JOIN users u ON b.user_id = u.id '
+            . 'LEFT JOIN booking_seats bs ON bs.booking_id = b.id '
+            . 'LEFT JOIN seats s ON s.id = bs.seat_id '
+            . 'GROUP BY b.id, b.booking_date, b.quantity, b.total_price, b.status, b.voucher_code, '
+            . 'b.discount_amount, b.payment_type, b.payment_provider, b.account_number, '
+            . 'c.title, c.date, c.location, c.price, u.name, u.email '
+            . 'ORDER BY b.booking_date DESC'
+        );
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
     public function hasBooking(int $userId, int $concertId): bool
     {
         $stmt = $this->db->prepare(
