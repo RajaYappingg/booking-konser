@@ -24,7 +24,7 @@
             <p class="mb-4"><?= e($concert['description']) ?></p>
         <?php endif; ?>
 
-        <div class="d-flex flex-wrap gap-3">
+        <div class="d-flex flex-wrap gap-3 detail-badges">
             <div class="badge bg-light text-dark">Price: Rp <?= e(number_format((float)$concert['price'], 0, ',', '.')) ?></div>
             <div class="badge bg-light text-dark">Seats left: <?= e((string)$concert['available_seats']) ?></div>
             <div class="badge bg-light text-dark">Status: <?= e(($concert['status'] ?? 'upcoming') === 'coming_soon' ? 'Coming Soon' : 'Upcoming') ?></div>
@@ -39,7 +39,7 @@
     </div>
 
     <div class="col-lg-5">
-        <div class="card shadow-sm border-0">
+        <div class="card shadow-sm border-0 booking-card">
             <div class="card-body">
                 <h2 class="h5 mb-3">Book Tickets</h2>
 
@@ -80,7 +80,8 @@
                             <label class="form-label">Choose Seats</label>
                             <div class="seat-legend mb-2">
                                 <?php foreach ($seatCategories as $category): ?>
-                                    <span class="badge bg-light text-dark me-1">
+                                    <?php $legendClass = 'legend-' . ($category['code'] ?? ''); ?>
+                                    <span class="badge legend-badge <?= e($legendClass) ?> me-1">
                                         <?= e($category['name']) ?>: Rp <?= e(number_format((float)$category['price'], 0, ',', '.')) ?>
                                     </span>
                                 <?php endforeach; ?>
@@ -197,14 +198,43 @@
                         <button type="submit" class="btn btn-primary w-100" id="confirm_button" disabled>Confirm Booking</button>
                     </form>
                     <style>
+                        .booking-card {
+                            border-radius: 18px;
+                            background: #ffffff;
+                            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+                        }
+
+                        .detail-badges .badge {
+                            border: 1px solid #e2e8f0;
+                            background: #f8fafc;
+                            font-weight: 600;
+                        }
+
+                        .booking-card .form-control,
+                        .booking-card .form-select {
+                            border-radius: 12px;
+                            border-color: #e2e8f0;
+                        }
+
                         .seat-map {
                             display: grid;
                             gap: 10px;
                             padding: 10px;
-                            border: 1px solid #e5e5e5;
-                            border-radius: 8px;
-                            background: #fafafa;
+                            border: 1px solid #e2e8f0;
+                            border-radius: 14px;
+                            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
                         }
+
+                        .legend-badge {
+                            border: 1px solid transparent;
+                            color: #1a1a1a;
+                            font-weight: 600;
+                        }
+
+                        .legend-vvip { background: #ffe8d2; border-color: #f3c89f; }
+                        .legend-vip { background: #fff3cd; border-color: #f1d087; }
+                        .legend-elite { background: #e7f1ff; border-color: #a9c7f5; }
+                        .legend-normal { background: #e9f7ef; border-color: #a7d9bd; }
 
                         .seat-row {
                             display: grid;
@@ -228,10 +258,16 @@
                         .seat {
                             border: 1px solid #ced4da;
                             background: #ffffff;
-                            border-radius: 6px;
-                            padding: 4px 0;
+                            border-radius: 8px;
+                            padding: 6px 0;
                             font-size: 11px;
                             cursor: pointer;
+                            transition: transform 0.15s ease, box-shadow 0.15s ease;
+                        }
+
+                        .seat:not(.seat-booked):hover {
+                            transform: translateY(-1px);
+                            box-shadow: 0 6px 12px rgba(15, 23, 42, 0.12);
                         }
 
                         .seat-vvip { background: #ffe8d2; border-color: #f3c89f; }
